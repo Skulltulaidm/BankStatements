@@ -2,6 +2,7 @@ import streamlit as st
 import re
 import pdfplumber
 import pandas as pd
+import openpyxl
 
 def process_monex(file):
     all_text = ""
