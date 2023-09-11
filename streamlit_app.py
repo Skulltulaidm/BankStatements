@@ -1,55 +1,49 @@
 import re
+import streamlit as st
 import pdfplumber
 import pandas as pd
-import streamlit as st
-from io import BytesIO
-import base64
 
-def process_monex(file):
+# Función para extraer texto del PDF
+def extract_pdf_text(file_path):
     all_text = ""
-    with pdfplumber.open(file) as pdf:
+    with pdfplumber.open(file_path) as pdf:
         for page in pdf.pages:
             all_text += page.extract_text() + "\n"
+    return all_text
 
+# Función para encontrar coincidencias en el texto extraído
+def find_matches_monex(all_text):
     pattern = re.compile(r'(\d{2}/\w{3})\s+([\w\s]+?)(?:\s+(\d{8}))?\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(-?\d+\.\d{2}|-?\d{1,3}(?:,\d{3})*\.\d{2})\s+(-?\d+\.\d{2}|-?\d{1,3}(?:,\d{3})*\.\d{2})')
+    return [m.groups() for m in re.finditer(pattern, all_text)]
 
-    matches = [m.groups() for m in re.finditer(pattern, all_text)]
-    column_names = ['Fecha', 'Descripción', 'Referencia', 'Abonos', 'Cargos', 'Movimiento Garantía', 'Saldo No Disponible', 'Saldo Disponible', 'Saldo Total']
-    data = [dict(zip(column_names, match)) for match in matches]
+st.title("Conversor de PDF a Excel")
 
-    df = pd.DataFrame(data)
-    return df
+# Elegir el banco
+banco = st.selectbox("Selecciona el banco de tu estado de cuenta:", ["MONEX", "Otro"])
 
-def to_excel(df):
-    try:
-        output = BytesIO()
-        writer = pd.ExcelWriter(output, engine='xlsxwriter')
-        df.to_excel(writer, sheet_name='Sheet1', index=False)
-        writer.save()
-        processed_data = output.getvalue()
-        return processed_data
-    except Exception as e:
-        st.write(f"Ocurrió un error al intentar guardar el DataFrame: {e}")
-        return None
+# Subir archivo PDF
+uploaded_file = st.file_uploader("Sube tu estado de cuenta en PDF:", type=["pdf"])
 
-def get_table_download_link(df, filename='data.xlsx', text='Descargar archivo Excel'):
-    val = to_excel(df)
-    if val is None:
-        return "Error durante la generación del archivo Excel."
-    
-    b64 = base64.b64encode(val).decode()
-    return f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">{text}</a>'
-
-# Streamlit UI
-st.title('Procesador de Estados de Cuenta')
-
-bank_option = st.selectbox('Selecciona tu banco:', ('MONEX', 'Otro banco'))
-
-uploaded_file = st.file_uploader("Carga tu estado de cuenta aquí", type=['pdf'])
-
-if uploaded_file:
-    st.write('Has subido 1 estado de cuenta.')
-    if bank_option == 'MONEX':
-        df = process_monex(uploaded_file)
-        st.write('Se ha procesado el estado de cuenta.')
-        st.markdown(get_table_download_link(df), unsafe_allow_html=True)
+if uploaded_file is not None:
+    with st.spinner("Procesando el archivo PDF..."):
+        
+        # Extracción de texto del PDF
+        text = extract_pdf_text(uploaded_file)
+        
+        if banco == "MONEX":
+            matches = find_matches_monex(text)
+        
+        # Si tienes más bancos, puedes añadir más condiciones aquí.
+        
+        column_names = ['Fecha', 'Descripción', 'Referencia', 'Abonos', 'Cargos', 'Movimiento Garantía', 'Saldo No Disponible', 'Saldo Disponible', 'Saldo Total']
+        data = [dict(zip(column_names, match)) for match in matches]
+        
+        # Crear DataFrame
+        df = pd.DataFrame(data)
+        
+        # Guardar como archivo Excel
+        nombre_archivo = 'Estado_de_Cuenta.xlsx'
+        df.to_excel(nombre_archivo, index=False)
+        
+    st.success(f"Se ha exportado el DataFrame a {nombre_archivo}")
+    st.download_button("Descargar archivo Excel", file=nombre_archivo, file_name=nombre_archivo, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
