@@ -25,12 +25,13 @@ def to_excel(df):
     writer = pd.ExcelWriter(output, engine='xlsxwriter')
     df.to_excel(writer, sheet_name='Sheet1', index=False)
     writer.save()
-    return output.getvalue()
+    processed_data = output.getvalue()
+    return processed_data
 
 def get_table_download_link(df, filename='data.xlsx', text='Descargar archivo Excel'):
     val = to_excel(df)
     b64 = base64.b64encode(val).decode()
-    return f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">{text}</a>'
+    return f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">{text}</a>'
 
 # Streamlit UI
 st.title('Procesador de Estados de Cuenta')
