@@ -21,15 +21,22 @@ def process_monex(file):
     return df
 
 def to_excel(df):
-    output = BytesIO()
-    writer = pd.ExcelWriter(output, engine='xlsxwriter')
-    df.to_excel(writer, sheet_name='Sheet1', index=False)
-    writer.save()
-    processed_data = output.getvalue()
-    return processed_data
+    try:
+        output = BytesIO()
+        writer = pd.ExcelWriter(output, engine='xlsxwriter')
+        df.to_excel(writer, sheet_name='Sheet1', index=False)
+        writer.save()
+        processed_data = output.getvalue()
+        return processed_data
+    except Exception as e:
+        st.write(f"Ocurrió un error al intentar guardar el DataFrame: {e}")
+        return None
 
 def get_table_download_link(df, filename='data.xlsx', text='Descargar archivo Excel'):
     val = to_excel(df)
+    if val is None:
+        return "Error durante la generación del archivo Excel."
+    
     b64 = base64.b64encode(val).decode()
     return f'<a href="data:application/octet-stream;base64,{b64}" download="{filename}">{text}</a>'
 
