@@ -12,9 +12,9 @@ def extract_pdf_text(file_path):
     return all_text
 
 # Función para encontrar coincidencias en el texto extraído
-def find_matches_monex(all_text):
+def find_matches_monex(text):
     pattern = re.compile(r'(\d{2}/\w{3})\s+([\w\s]+?)(?:\s+(\d{8}))?\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(\d+\.\d{2}|\d{1,3}(?:,\d{3})*\.\d{2})\s+(-?\d+\.\d{2}|-?\d{1,3}(?:,\d{3})*\.\d{2})\s+(-?\d+\.\d{2}|-?\d{1,3}(?:,\d{3})*\.\d{2})')
-    return [m.groups() for m in re.finditer(pattern, all_text)]
+    return [m.groups() for m in re.finditer(pattern, text)]
 
 st.title("Conversor de PDF a Excel")
 
