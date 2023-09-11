@@ -2,8 +2,8 @@ import re
 import pdfplumber
 import pandas as pd
 import streamlit as st
+from io import BytesIO
 import base64
-from io import StringIO
 
 def process_monex(file):
     all_text = ""
@@ -20,15 +20,17 @@ def process_monex(file):
     df = pd.DataFrame(data)
     return df
 
-def to_csv(df):
-    csv_buffer = StringIO()
-    df.to_csv(csv_buffer, index=False)
-    return csv_buffer.getvalue().encode('utf-8')
+def to_excel(df):
+    output = BytesIO()
+    writer = pd.ExcelWriter(output, engine='xlsxwriter')
+    df.to_excel(writer, sheet_name='Sheet1', index=False)
+    writer.save()
+    return output.getvalue()
 
-def get_table_download_link(df, filename='data.csv', text='Descargar archivo CSV'):
-    val = to_csv(df)
+def get_table_download_link(df, filename='data.xlsx', text='Descargar archivo Excel'):
+    val = to_excel(df)
     b64 = base64.b64encode(val).decode()
-    return f'<a href="data:text/csv;base64,{b64}" download="{filename}">{text}</a>'
+    return f'<a href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,{b64}" download="{filename}">{text}</a>'
 
 # Streamlit UI
 st.title('Procesador de Estados de Cuenta')
@@ -42,4 +44,4 @@ if uploaded_file:
     if bank_option == 'MONEX':
         df = process_monex(uploaded_file)
         st.write('Se ha procesado el estado de cuenta.')
-        st.markdown(get_table_download_link(df, text='Haz clic aquí para descargar el CSV'), unsafe_allow_html=True)
+        st.markdown(get_table_download_link(df), unsafe_allow_html=True)
