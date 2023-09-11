@@ -3,3 +3,4 @@ streamlit
 pdfplumber
 pandas
 xlsxwriter
+Workbook
