@@ -2,6 +2,7 @@ import re
 import streamlit as st
 import pdfplumber
 import pandas as pd
+from io import BytesIO
 
 # Función para extraer texto del PDF
 def extract_pdf_text(file_path):
@@ -41,9 +42,18 @@ if uploaded_file is not None:
         # Crear DataFrame
         df = pd.DataFrame(data)
         
-        # Guardar como archivo Excel
-        nombre_archivo = 'Estado_de_Cuenta.xlsx'
-        df.to_excel(nombre_archivo, index=False)
+        # Guardar como archivo Excel en un buffer
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False)
+        output.seek(0)
         
-    st.success(f"Se ha exportado el DataFrame a {nombre_archivo}")
-    st.download_button("Descargar archivo Excel", file=nombre_archivo, file_name=nombre_archivo, mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    st.success("Proceso completado")
+    
+    # Descargar archivo Excel
+    st.download_button(
+        label="Descargar archivo Excel",
+        data=output,
+        file_name="Estado_de_Cuenta.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
