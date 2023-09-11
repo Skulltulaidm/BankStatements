@@ -2,6 +2,3 @@ openpyxl
 streamlit
 pdfplumber
 pandas
-xlsxwriter
-Workbook
-base64
