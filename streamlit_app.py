@@ -1,7 +1,7 @@
+import streamlit as st
 import re
 import pdfplumber
 import pandas as pd
-import streamlit as st
 
 def process_monex(file):
     all_text = ""
